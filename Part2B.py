@@ -1,172 +1,164 @@
-from turtle import distance
 import numpy as np
 import random
 import matplotlib.pyplot as plt
-from sklearn.model_selection import learning_curve
 
-from test import calculate_accuracy
+# Function description: Initialize centroids randomly from the feature data
+def initialize_centroids(feature_data, k):
+    try:
+        res = random.sample(range(0, len(feature_data)), k)
+        centroids = feature_data[res]
+        print('Initial centroids:', centroids)
+        return centroids
+    except Exception as e:
+        print(f"Error in initialize_centroids: {e}")
+        return None
 
-
-# Function description :- The function returns the centroid from the feature_data
-# input :- feature_data, hyperparameter_k
-# output :- array of centroids
-def initalize_centroids(feature_data, k):
-    res = random.sample(range(0, len(feature_data)), k)
-    a = feature_data[res]
-    print('initial centroid: ',a)
-    return a
-
-# Function description :- The function returns the mini_batch points from the feature_data
-# input :- feature_data, hyperparameter_k
-# output :- array of mini_batch
+# Function description: Generate a mini-batch of points from the feature data
 def mini_batch(feature_data, mini_batch_size):
-    # mini_batch_size random sample from length of feature
-    res = random.sample(range(0, len(feature_data)), mini_batch_size)
-    # getting center from feature data using res as a index
-    a = feature_data[res]
-    print('mini_batch: ',a)
-    return a
+    try:
+        res = random.sample(range(0, len(feature_data)), mini_batch_size)
+        batch = feature_data[res]
+        print('Mini-batch:', batch)
+        return batch
+    except Exception as e:
+        print(f"Error in mini_batch: {e}")
+        return None
 
-# Function description :- Assign centroid to feature_data using current array of centroid
-# input :- feature_data, current_array_of_centroids
-# output :- centroid data assigned to each individual, distortion cost
+# Function description: Assign centroid to feature data points
 def assign_centroids(feature_data, current_array_of_centroids):
+    try:
+        distances = []
 
-    distance_calculated = []
+        for centroid in current_array_of_centroids:
+            diff = np.subtract(feature_data, centroid)
+            squared_diff = np.square(diff)
+            distance = np.sqrt(np.sum(squared_diff, axis=1))
+            distances.append(distance)
 
-    for i in current_array_of_centroids:
-        a = ((abs(np.subtract(feature_data, i)))**2)
-        c = np.sum(a, axis=1)
-        d = np.sqrt(c)
-        print('testing formula : ',a)
-        print('testing length: ', len(a))
-        print('value from formula: ', len(d))
-        distance_calculated.append(d)
+        distances = np.array(distances)
+        assigned_centroids = np.argmin(distances, axis=0)
 
-    print('distance calculated: ',distance_calculated)
-    print('distance calculated: ',len(distance_calculated[0]))
+        distortion_cost = calculate_cost(feature_data, assigned_centroids, current_array_of_centroids)
+        return assigned_centroids, distortion_cost
+    except Exception as e:
+        print(f"Error in assign_centroids: {e}")
+        return None, None
 
-    
-    centroid_data_assigned_to_each_individual = np.argsort(distance_calculated, axis=0)[:1]
+# Function description: Calculate the distortion cost
+def calculate_cost(feature_data, assigned_centroids, centroids):
+    try:
+        distortion_cost = 0
+        for cluster_index in range(len(centroids)):
+            cluster_points = feature_data[assigned_centroids == cluster_index]
+            centroid = centroids[cluster_index]
+            cluster_distances = np.sum(np.square(cluster_points - centroid))
+            distortion_cost += cluster_distances
+        print('Distortion cost:', distortion_cost)
+        return distortion_cost
+    except Exception as e:
+        print(f"Error in calculate_cost: {e}")
+        return float('inf')
 
-    distortion_cost = calculate_cost(feature_data, centroid_data_assigned_to_each_individual[0], current_array_of_centroids)
-    return centroid_data_assigned_to_each_individual[0], distortion_cost
+# Function description: Move centroids using a learning rate approach
+def move_centroids(feature_data, assigned_centroids, centroids):
+    try:
+        unique_clusters = np.unique(assigned_centroids)
+        updated_centroids = np.copy(centroids)
+        counts = {cluster: 0 for cluster in unique_clusters}
 
-# Function description :- The function will calculate the distortion cost of the centroids
-# input :- feature_data, current_array_of_centroids, centroid_data_assigned_to_each_individual
-# output :- distortion cost
-def calculate_cost(feature_data, centroid_data_assigned_to_each_individual, current_array_of_centroids):
-    unique, counts = np.unique(centroid_data_assigned_to_each_individual, return_index=True)
-    dataset = np.array(centroid_data_assigned_to_each_individual)
-    distortion_cost = 0
-    for i in unique:
-        a = np.where(dataset == i)
-        aa = a[0]
-        b = feature_data[aa, ]
-        cc = (np.sum((abs(np.subtract(b, current_array_of_centroids[i])))**2))
-        distortion_cost += cc
-    print('hey distortion cost here ;)',distortion_cost)
-    return distortion_cost
+        for i, cluster in enumerate(assigned_centroids):
+            counts[cluster] += 1
+            learning_rate = 1 / counts[cluster]
+            updated_centroids[cluster] = (1 - learning_rate) * updated_centroids[cluster] + learning_rate * feature_data[i]
 
+        print('Updated centroids:', updated_centroids)
+        return updated_centroids
+    except Exception as e:
+        print(f"Error in move_centroids: {e}")
+        return centroids
 
-
-# Function description :- The function will generate new centroids for feature dataset
-# input :- feature_data, centroid_data_assigned_to_each_individual, current_array_of_centroids
-# output :- new_array_of_centroids
-def move_centroids(feature_data, centroid_data_assigned_to_each_individual, current_array_of_centroids):
-    unique, counts = np.unique(centroid_data_assigned_to_each_individual, return_index=True)
-    print('centroid data assigned to each individual: ', centroid_data_assigned_to_each_individual)
-    
-    # dict to store nnew cemtroids
-    CC = {}
-
-    countt = []
-    for i in range(0,len(unique)):
-        countt.append(0)
-
-    # dict to store cluster and there counts
-    v=dict(zip(unique, countt))
-    
-    print('current array of centroids: ', current_array_of_centroids)
-
-   
-    for x in range(0, len(feature_data)):
-        # getting center of this x
-        c = centroid_data_assigned_to_each_individual[x]
-        # updating per center count
-        v[c] = v[c]+1
-        # getting per center learning rate
-        learning_rate = (1/v[c])
-        # taking gradient steps
-        CC[int(c)] = (1-learning_rate)*c + (learning_rate*(feature_data[x]))
-
-    a = list(CC.values())
-    print('a aa: ',a[0])
-    return a[0]
-
-
-# Function description :- The function restarts, restart the kmeans with k different values and return the best solution found over the 10 
-# restarts
-# input :- feature_data,number_of_centroids, no_of_iterations, no_of_restarts
-# output :- Best solution found over 10 restarts, k
+# Function description: Restart k-means clustering multiple times and find the best solution
 def restart_kmeans(feature_data, no_of_iterations, no_of_restarts):
-    current_array_of_centroids = []
-    distortion_cost_fn_value1 = []
-    centroids1 = []
-    array_of_centroids1 = []
-    k = []
-    for i in range(0, no_of_restarts):
-        k.append(i+1)
-        current_array_of_centroids = initalize_centroids(feature_data, i+1)
-        print('current array of centroids: ', current_array_of_centroids)
-        distortion_cost_fn_value = []
-        centroids = []
-        array_of_centroids = []
-        array_of_centroids.append(current_array_of_centroids)
-        for i in range(0, no_of_iterations):
-            centroid_data_assigned_to_each_individual,distortion_cost = assign_centroids(feature_data, current_array_of_centroids)
-            # distortion_cost = calculate_cost(feature_data, centroid_data_assigned_to_each_individual, current_array_of_centroids)
-            centroids.append(centroid_data_assigned_to_each_individual)
-            current_array_of_centroids = move_centroids(feature_data, centroid_data_assigned_to_each_individual, current_array_of_centroids)
-            array_of_centroids.append(current_array_of_centroids)
-            distortion_cost_fn_value.append(distortion_cost)
+    try:
+        best_cost = float('inf')
+        best_centroids = None
+        all_costs = []
+        k_values = []
 
-        print('best distortion values: ',np.argsort(distortion_cost_fn_value)[:1])
-        abc = np.argsort(distortion_cost_fn_value)[:1]
-        abc1 = abc[0]
-        distortion_cost_fn_value1.append(distortion_cost_fn_value[abc1])
-        centroids1.append(centroids[abc1])
-        array_of_centroids1.append(array_of_centroids[abc1])
+        for restart in range(1, no_of_restarts + 1):
+            print(f"Restart {restart}")
+            current_centroids = initialize_centroids(feature_data, restart)
+            if current_centroids is None:
+                continue
 
+            for iteration in range(no_of_iterations):
+                assigned_centroids, cost = assign_centroids(feature_data, current_centroids)
+                if assigned_centroids is None:
+                    break
 
-    abc = np.argsort(distortion_cost_fn_value1)[:1]
-    abc1 = abc[0]
-    print('distortion cost function :',distortion_cost_fn_value1[abc1])
-    print('distortion cost function value :',distortion_cost_fn_value1)
-  
+                current_centroids = move_centroids(feature_data, assigned_centroids, current_centroids)
+                all_costs.append(cost)
 
-    print('array of centroids', array_of_centroids1[abc1])
-    return distortion_cost_fn_value1, k
+                if cost < best_cost:
+                    best_cost = cost
+                    best_centroids = current_centroids
 
+            k_values.append(restart)
 
+        print('Best distortion cost:', best_cost)
+        return all_costs, k_values
+    except Exception as e:
+        print(f"Error in restart_kmeans: {e}")
+        return [], []
 
+# Function description: Get user input from the terminal
+def get_user_input():
+    try:
+        dataset_path = input("Enter the dataset file path (e.g., 'clusteringData.csv'): ").strip()
+        mini_batch_size = int(input("Enter the mini-batch size: "))
+        no_of_iterations = int(input("Enter the number of iterations: "))
+        no_of_restarts = int(input("Enter the number of restarts: "))
+        return dataset_path, mini_batch_size, no_of_iterations, no_of_restarts
+    except ValueError as e:
+        print(f"Invalid input: {e}. Please enter numeric values for batch size, iterations, and restarts.")
+        return None, None, None, None
+
+# Main function
 def main():
-    feature_dataset = np.loadtxt("clusteringData.csv", delimiter=',')
-    feature_data = feature_dataset[:, ]
-    print(feature_dataset[:, ])
+    try:
+        # Get inputs from user
+        dataset_path, mini_batch_size, no_of_iterations, no_of_restarts = get_user_input()
+        if not dataset_path or not mini_batch_size or not no_of_iterations or not no_of_restarts:
+            print("Exiting due to invalid inputs.")
+            return
 
-    mini_batch_size = len(feature_data)/7
-    no_of_iterations=10
-    no_of_restarts = 10
-    size_of_mini_batch = 80000
-    mini_batch_array = mini_batch(feature_data, size_of_mini_batch)
-    print('mini batch array: ', mini_batch_array)
-    a,b = restart_kmeans(mini_batch_array, no_of_iterations, no_of_restarts)
-    xpoints = np.array(b)
-    ypoints = np.array(a)
-    plt.plot(xpoints, ypoints)
-    plt.show()
-    exit()
+        # Load dataset
+        try:
+            feature_dataset = np.loadtxt(dataset_path, delimiter=',')
+            feature_data = feature_dataset[:, ]
+            print('Feature data loaded.')
+        except FileNotFoundError:
+            print(f"Error: File '{dataset_path}' not found.")
+            return
+
+        # Create mini-batch and run k-means
+        mini_batch_array = mini_batch(feature_data, mini_batch_size)
+        if mini_batch_array is None:
+            return
+
+        print('Mini-batch created.')
+        costs, k_values = restart_kmeans(mini_batch_array, no_of_iterations, no_of_restarts)
+
+        # Plot results
+        if costs and k_values:
+            plt.plot(k_values, costs)
+            plt.xlabel('Restarts')
+            plt.ylabel('Distortion Cost')
+            plt.title('K-Means Distortion Costs')
+            plt.show()
+
+    except Exception as e:
+        print(f"Unexpected error in main: {e}")
 
 if __name__ == '__main__':
     main()
