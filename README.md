@@ -21,12 +21,12 @@ The script requires Python 3.7 or higher. Install the dependencies using the pro
 pip3 install -r requirements.txt
 ```
 
-### Setup for running PartA.py
+### Setup for running Part2A.py
 1. Clone this repository or download the script.
 2. Place your dataset in the same directory as the script. Ensure the dataset is in CSV format.
 3. Run the script:
      ```
-     python PartA.py
+     python Part2A.py
      ```
 4. Enter the required inputs:
      1. File path to the dataset (e.g., clusteringData.csv)
@@ -35,12 +35,12 @@ pip3 install -r requirements.txt
      4. Number of restarts
    The script will process the data and display a plot of distortion costs vs. restart numbers.
 
-### Setup for running PartA.py
+### Setup for running Part2B.py
 1. Clone this repository or download the script.
 2. Place your dataset in the same directory as the script. Ensure the dataset is in CSV format.
 3. Run the script:
      ```
-     python PartA.py
+     python Part2B.py
      ```
 4. Enter the required inputs:
      1. File path to the dataset (e.g., clusteringData.csv)
